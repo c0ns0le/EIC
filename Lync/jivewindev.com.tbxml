@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TopologyBuilder IsFreeFromChanges="true" FileName="C:\Users\administrator.pocketdomain\Documents\jivewindev.com.tbxml" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.TopologyBuilder.2008">
+  <NewTopology>
+    <PartialTopology IsPublished="false" Signature="00000000-0000-0000-0000-000000000000" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.WritableTopology.2008">
+      <InternalDomains AllowAllDomains="false" DefaultDomain="jivewindev.com" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.Topology.2008">
+        <InternalDomain Name="jivewindev.com" Authoritative="false" AllowSubDomains="false" />
+      </InternalDomains>
+      <SimpleUrlConfiguration UseBackendDatabase="false" xmlns="urn:schema:Microsoft.Rtc.Management.Settings.SimpleUrl.2008">
+        <SimpleUrl Component="Dialin" Domain="*" ActiveUrl="https://dialin.jivewindev.com">
+          <SimpleUrlEntry Url="https://dialin.jivewindev.com" />
+        </SimpleUrl>
+        <SimpleUrl Component="Meet" Domain="jivewindev.com" ActiveUrl="https://meet.jivewindev.com">
+          <SimpleUrlEntry Url="https://meet.jivewindev.com" />
+        </SimpleUrl>
+      </SimpleUrlConfiguration>
+      <CentralSites>
+        <CentralSite SiteId="1">
+          <Name xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.Topology.2008">JiveWinDevSite</Name>
+          <Location City="Portland" State="OR" CountryCode="USA" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.Topology.2008" />
+          <Clusters>
+            <Cluster IsSingleMachineOnly="true" UniqueId="4198fb30-d806-45ad-afdb-5f02a5457853" RequiresReplication="true" RequiresSetup="true" Fqdn="WINDEV-LYNC2013.jivewindev.com">
+              <Machines>
+                <Machine FaultDomain="WINDEV-LYNC2013.jivewindev.com" UpgradeDomain="WINDEV-LYNC2013.jivewindev.com">
+                  <NetInterface InterfaceSide="Primary" InterfaceNumber="1" IPAddress="0.0.0.0" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.Topology.2008" />
+                  <NetInterface InterfaceSide="External" InterfaceNumber="1" IPAddress="0.0.0.0" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.Topology.2008" />
+                </Machine>
+              </Machines>
+              <SqlInstances>
+                <SqlInstance UniqueId="df4b5ca6-4ac7-453b-b76f-7a66e77f148d" Name="rtc" />
+              </SqlInstances>
+            </Cluster>
+          </Clusters>
+          <RemoteSites />
+        </CentralSite>
+      </CentralSites>
+      <Services>
+        <Service UniqueId="f0dbe3f2-3eda-4521-86f0-2e25315e0257" RoleName="UserServices" RoleVersion="2" InstalledOn="4198fb30-d806-45ad-afdb-5f02a5457853" ServiceVersion="6">
+          <DependsOn>
+            <Dependency ServiceUniqueId="5dfb9bdb-2d72-42c0-ac7e-05d289f44c7b" Usage="Default" />
+            <Dependency ServiceUniqueId="fc291a69-7037-415b-8ea3-1edb0011f513" Usage="Default" />
+          </DependsOn>
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <Port Owner="urn:component:McuFactory" Usage="WebServer" InterfaceSide="Primary" InterfaceNumber="1" Port="444" Protocol="Mtls" UrlPath="/LiveServer/McuFactory/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:PresenceFocus" Usage="UserPinManagement" InterfaceSide="Primary" InterfaceNumber="1" Port="443" Protocol="Https" UrlPath="/LiveServer/UserPinManagement/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:McuFactory" Usage="WcfServer" InterfaceSide="Primary" InterfaceNumber="1" Port="9001" Protocol="Tcp" UrlPath="/LiveServer/ConfDirMgmt/" AuthorizesRequests="false" />
+          </Ports>
+        </Service>
+        <Service UniqueId="5884c016-4e1c-4a03-97a5-5b1ad181edf3" RoleName="Registrar" RoleVersion="2" InstalledOn="4198fb30-d806-45ad-afdb-5f02a5457853" ServiceVersion="6" Type="Microsoft.Rtc.Management.Deploy.Internal.ServiceRoles.RegistrarService">
+          <DependsOn>
+            <Dependency ServiceUniqueId="f0dbe3f2-3eda-4521-86f0-2e25315e0257" Usage="Default" />
+            <Dependency ServiceUniqueId="ca12c0b2-bf7c-4631-94df-bc29f9a57f4c" Usage="Default" />
+          </DependsOn>
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <Port Owner="urn:component:Registrar" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5061" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="HomeServer" />
+            <Port Owner="urn:component:Registrar" Usage="WebServer" InterfaceSide="Primary" InterfaceNumber="1" Port="444" Protocol="Mtls" UrlPath="/LiveServer/Focus/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:WinFab" Usage="WinFabFederation" InterfaceSide="Primary" InterfaceNumber="1" Port="5090" Protocol="Tcp" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:WinFab" Usage="WinFabLeaseAgent" InterfaceSide="Primary" InterfaceNumber="1" Port="5091" Protocol="Tcp" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:WinFab" Usage="WinFabClientConnection" InterfaceSide="Primary" InterfaceNumber="1" Port="5092" Protocol="Tcp" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:WinFab" Usage="WinFabIPC" InterfaceSide="Primary" InterfaceNumber="1" Port="5093" Protocol="Tcp" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:WinFab" Usage="WinFabReplication" InterfaceSide="Primary" InterfaceNumber="1" Port="5094" Protocol="Tcp" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:QoE" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5061" Protocol="Mtls" UrlPath="/LiveServer/QoE/" AuthorizesRequests="true" GruuType="QoS" />
+            <Port Owner="urn:component:Lyss" Usage="WcfMtls" InterfaceSide="Primary" InterfaceNumber="1" Port="5077" Protocol="Mtls" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:XmppFederation" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5098" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="XmppFederation" />
+          </Ports>
+          <RegistrarService IsDirector="false" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008" />
+        </Service>
+        <Service UniqueId="5dfb9bdb-2d72-42c0-ac7e-05d289f44c7b" RoleName="UserStore" RoleVersion="1" InstalledOn="df4b5ca6-4ac7-453b-b76f-7a66e77f148d" ServiceVersion="6">
+          <DependsOn />
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008" />
+        </Service>
+        <Service UniqueId="b1350d2b-ff89-491d-98b9-0dd83cf334d1" RoleName="FileStore" RoleVersion="1" InstalledOn="4198fb30-d806-45ad-afdb-5f02a5457853" ServiceVersion="6" Type="Microsoft.Rtc.Management.Deploy.Internal.ServiceRoles.FileStoreService">
+          <DependsOn />
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008" />
+          <FileStoreService ShareName="LyncShare" xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008" />
+        </Service>
+        <Service UniqueId="ca12c0b2-bf7c-4631-94df-bc29f9a57f4c" RoleName="WebServices" RoleVersion="1" InstalledOn="4198fb30-d806-45ad-afdb-5f02a5457853" ServiceVersion="6" Type="Microsoft.Rtc.Management.Deploy.Internal.ServiceRoles.WebService">
+          <DependsOn>
+            <Dependency ServiceUniqueId="b1350d2b-ff89-491d-98b9-0dd83cf334d1" Usage="Default" />
+            <Dependency ServiceUniqueId="f0dbe3f2-3eda-4521-86f0-2e25315e0257" Usage="Default" />
+          </DependsOn>
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <Port Owner="urn:component:OCSWebSite" Usage="WebSite" InterfaceSide="External" InterfaceNumber="1" Port="8080" Protocol="Http" UrlPath="/" AuthorizesRequests="false" ConfiguredPort="80" />
+            <Port Owner="urn:component:OCSWebSite" Usage="WebSite" InterfaceSide="External" InterfaceNumber="1" Port="4443" Protocol="Https" UrlPath="/" AuthorizesRequests="false" ConfiguredPort="443" />
+            <Port Owner="urn:component:OCSWebSite" Usage="WebSite" InterfaceSide="Primary" InterfaceNumber="1" Port="80" Protocol="Http" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:OCSWebSite" Usage="WebSite" InterfaceSide="Primary" InterfaceNumber="1" Port="443" Protocol="Https" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:Reach" Usage="PsomServer" InterfaceSide="Primary" InterfaceNumber="1" Port="8060" Protocol="Mtls" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:Reach" Usage="PsomServer" InterfaceSide="External" InterfaceNumber="1" Port="8061" Protocol="Mtls" UrlPath="/" AuthorizesRequests="false" />
+            <Port Owner="urn:component:MediaComp" Usage="AppSharingCommunication" InterfaceSide="Primary" InterfaceNumber="1" Port="49152" Protocol="TcpOrUdp" UrlPath="/" AuthorizesRequests="false" Range="16383" />
+            <Port Owner="urn:component:McxService" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5086" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="McxInternal" />
+            <Port Owner="urn:component:McxServiceExternal" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5087" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="McxExternal" />
+            <Port Owner="urn:component:PersistentChatWebManager" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5095" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="PersistentChatRMWebInternal" />
+            <Port Owner="urn:component:PersistentChatWebManagerExternal" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5096" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="PersistentChatRMWebExternal" />
+            <Port Owner="urn:component:UcwaService" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5088" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="UcwaInternal" />
+            <Port Owner="urn:component:UcwaServiceExternal" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5089" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="UcwaExternal" />
+          </Ports>
+          <WebService xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <ExternalSettings Host="WINDEV-LYNC2013.jivewindev.com">
+              <OverrideUrls />
+            </ExternalSettings>
+            <WebComponents xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.WebServices.2011">
+              <Component ComponentName="ABHandler" />
+              <Component ComponentName="ABFiles" />
+              <Component ComponentName="AutodiscoverService" />
+              <Component ComponentName="CAHandler" />
+              <Component ComponentName="CAHandlerAnon" />
+              <Component ComponentName="CollabContent" />
+              <Component ComponentName="Cscp" />
+              <Component ComponentName="DataCollabWeb" />
+              <Component ComponentName="DeviceUpdateDownload" />
+              <Component ComponentName="DeviceUpdateStore" />
+              <Component ComponentName="Dialin" />
+              <Component ComponentName="DLExpansion" />
+              <Component ComponentName="LIService" />
+              <Component ComponentName="Lwa" />
+              <Component ComponentName="McxService" />
+              <Component ComponentName="Meet" />
+              <Component ComponentName="OnlineAuth" />
+              <Component ComponentName="PowerShell" />
+              <Component ComponentName="Reach" />
+              <Component ComponentName="RgsAgentService" />
+              <Component ComponentName="StoreWeb" />
+              <Component ComponentName="UcwaService" />
+              <Component ComponentName="WebScheduler" />
+              <Component ComponentName="WebTicket" />
+              <Component ComponentName="PersistentChatWeb" />
+              <Component ComponentName="PersistentChatWebManager" />
+              <Component ComponentName="HybridConfigService" />
+            </WebComponents>
+            <UpaSeparator xmlns="urn:schema:Microsoft.Rtc.Management.BaseTypes.2008"></UpaSeparator>
+          </WebService>
+        </Service>
+        <Service UniqueId="fc291a69-7037-415b-8ea3-1edb0011f513" RoleName="ConfServices" RoleVersion="1" InstalledOn="4198fb30-d806-45ad-afdb-5f02a5457853" ServiceVersion="6" Type="Microsoft.Rtc.Management.Deploy.Internal.ServiceRoles.ConfService">
+          <DependsOn>
+            <Dependency ServiceUniqueId="b1350d2b-ff89-491d-98b9-0dd83cf334d1" Usage="Default" />
+            <Dependency ServiceUniqueId="ca12c0b2-bf7c-4631-94df-bc29f9a57f4c" Usage="Default" />
+            <Dependency ServiceUniqueId="f0dbe3f2-3eda-4521-86f0-2e25315e0257" Usage="Default" />
+          </DependsOn>
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <Port Owner="urn:component:IMConf" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5062" Protocol="Mtls" UrlPath="/" AuthorizesRequests="false" GruuType="chat" />
+            <Port Owner="urn:component:IMConf" Usage="WebServer" InterfaceSide="Primary" InterfaceNumber="1" Port="444" Protocol="Mtls" UrlPath="/LiveServer/IMMcu/" AuthorizesRequests="false" />
+          </Ports>
+          <ConfService xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <MCUs>
+              <MCU ComponentName="IMConf" Vendor="Microsoft" />
+            </MCUs>
+          </ConfService>
+        </Service>
+        <Service UniqueId="6f9b8c14-91a8-4fe7-89b0-116f4b7a7bb3" RoleName="ApplicationServer" RoleVersion="1" InstalledOn="4198fb30-d806-45ad-afdb-5f02a5457853" ServiceVersion="6" Type="Microsoft.Rtc.Management.Deploy.Internal.ServiceRoles.ApplicationServerService">
+          <DependsOn>
+            <Dependency ServiceUniqueId="5884c016-4e1c-4a03-97a5-5b1ad181edf3" Usage="Default" />
+            <Dependency ServiceUniqueId="b1350d2b-ff89-491d-98b9-0dd83cf334d1" Usage="Default" />
+            <Dependency ServiceUniqueId="388876c2-c3ff-447f-8c32-6dffdbbc10ff" Usage="Default" />
+          </DependsOn>
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008">
+            <Port Owner="urn:application:testbot" Usage="SipServer" InterfaceSide="Primary" InterfaceNumber="1" Port="5076" Protocol="Mtls" UrlPath="/" AuthorizesRequests="true" GruuType="Microsoft.Rtc.Applications.TestBot" />
+            <Port Owner="urn:component:MediaComp" Usage="AudioCommunication" InterfaceSide="Primary" InterfaceNumber="1" Port="49152" Protocol="TcpOrUdp" UrlPath="/" AuthorizesRequests="false" Range="8348" />
+            <Port Owner="urn:component:MediaComp" Usage="VideoCommunication" InterfaceSide="Primary" InterfaceNumber="1" Port="57501" Protocol="TcpOrUdp" UrlPath="/" AuthorizesRequests="false" Range="8034" />
+            <Port Owner="urn:component:MediaComp" Usage="AppSharingCommunication" InterfaceSide="Primary" InterfaceNumber="1" Port="49152" Protocol="TcpOrUdp" UrlPath="/" AuthorizesRequests="false" Range="16383" />
+          </Ports>
+          <ApplicationServerService xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008" />
+        </Service>
+        <Service UniqueId="388876c2-c3ff-447f-8c32-6dffdbbc10ff" RoleName="ApplicationStore" RoleVersion="1" InstalledOn="df4b5ca6-4ac7-453b-b76f-7a66e77f148d" ServiceVersion="6">
+          <DependsOn />
+          <Ports xmlns="urn:schema:Microsoft.Rtc.Management.Deploy.ServiceRoles.2008" />
+        </Service>
+      </Services>
+    </PartialTopology>
+  </NewTopology>
+</TopologyBuilder>

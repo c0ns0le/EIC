@@ -1,0 +1,19 @@
+Sharepoint's prerequisites (about 180mb for 2013SP1) can be obtained two ways, either on the VM itself during the script's execution or separately using the included script and then copied into the VM in the correct place (c:\deploy\Sharepoint\2013\Sharepoint\prerequisiteinstallerfiles).  Currently the most automatic deployments are the Domain Controller and SP2013.  Additional configurations will be smoothed and polished as time and demand permits.
+
+Domain Controller:
+1. Insert EIC-Sharepoint ISO into D:
+2. Execute "D:\_RunMeFirst.cmd"
+3. Remove EIC-Sharepoint ISO
+4. Insert Server 2012R2 ISO into D:
+5. Execute "c:\deploy\Install_ADDS.cmd"
+6. System will reboot several times.
+7. A msgbox will say "Done" when it's done.
+
+Combined Sharepoint and SQL:
+1. Insert EIC-Sharepoint ISO into D:
+2. Execute "D:\_RunMeFirst.cmd"
+3. Remove EIC-Sharepoint ISO
+4. Insert Sharepoint 2013 SP1 ISO into D:
+5. Execute "c:\deploy\Install_SP2013.cmd"
+6. Wait until AutoSPInstaller is done and opens Internet Explorer.
+7. Execute C:\Deploy\PostInstall_SP2013.cmd
