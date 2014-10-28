@@ -1,13 +1,35 @@
 ﻿
+Function LoadParameters {
+    if ($PSScriptRoot) {$ScriptPath = $PSScriptRoot} else {$ScriptPath = "C:\EIC\Deploy"}
+    [xml]$Script:XML = Get-Content "$ScriptPath\Settings.xml" 
+    $SpecialNodes = @("Hosts","DNSRecords","DerivedParameters")
+    $ExclusionXPath = ""
+    $SpecialNodes | % { $ExclusionXpath += "[not(self::$_)]" }
+    $ConfigNodes = $XML | Select-XML -XPath "//Configuration/*$ExclusionXpath"
+
+    $ConfigNodes | % { $_.Node.ChildNodes.Name | % { Set-Variable $_ -Value ($xml.SelectSingleNode("//$_").innertext) -Scope Script } }
+    $XML.Configuration.Hosts.ChildNodes | % { Set-Variable $_.Name -Value $_ -Scope Script }
+    
+    $DerivedParameters = $xml | Select-XML -XPath "//Configuration/DerivedParameters" 
+    $DerivedParameters | % { $_.Node.ChildNodes.Name | %{ Set-Variable $_ -Value (& ([scriptblock]::create("$($xml.SelectSingleNode(""//$_"").innertext)"))) -Scope Script -Force }}
+    
+    }
+
+Function ValidateParameters {
+     $RegexToCheck = "$([regex]::Escape($SetupPath))"
+     $PathsToCheck = $XML.Configuration.Paths.ChildNodes | ? { $_.innertext -match $RegexToCheck -AND $_.innertext -match "\."} | %{$_.innertext}
+     $MissingFiles = ""
+     $PathsToCheck | % { if (-NOT (test-path $_)) {$MissingFiles += "$_`r`n"} }
+     if ($MissingFiles) {write-host "Missing files:";write-host $MissingFiles; throw "Missing files!"}
+    }
+
 Function Initialize($Settings) {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
     Write-Output "Initializing $($Settings.Hostname)"
-    Install-NetFX3 $Settings.Role
     Disable-Task "\Microsoft\Windows\Server Manager\ServerManager"
-    Create-LocalUser "administrator" $OmniParam.Password
+    Create-LocalUser "administrator" $Password
     Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' 'AutoAdminLogon' '1' 'String'
     Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' 'DefaultUserName' 'Administrator' 'String'
-    Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' 'DefaultPassword' $OmniParam.Password 'String'
+    Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' 'DefaultPassword' $Password 'String'
     Add-Registry 'HKLM:\System\CurrentControlSet\Control\Terminal Server' 'fDenyTSConnections' '0' 'DWord'
     Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system' 'EnableLUA' '0' 'DWord'
     Add-Registry 'HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main' 'DisableFirstRunCustomize' '1' 'DWord'
@@ -18,8 +40,9 @@ Function Initialize($Settings) {
     Set-Networking $Settings.IPAddress
     Set-EnvironmentVariable "Version" $Settings.Version
     Set-EnvironmentVariable "Role" $Settings.Role
+    Set-Variable Role -Value $Settings.Role -Scope Script
     Join-Domain $Settings.Hostname $Settings.Role
-    net localgroup "Remote Desktop Users" /add "$($OmniParam.DomainName)\Domain Users"
+    #net localgroup "Remote Desktop Users" /add "$($DomainName)\Domain Users"
     }
 Function Add-Registry ($Path, $Name, $Value, $PropertyType) {
     if (-NOT (Test-Path $Path)) { New-Item -path $Path -Force }
@@ -97,18 +120,26 @@ Function msgbox($Text){
     [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
     [System.Windows.Forms.MessageBox]::Show($Text)
     }
+
 Function Add-Task ($Stage) {
     schtasks.exe /CREATE /RU 'builtin\users' /SC ONLOGON /RL HIGHEST /TN "$Stage" /tr "powershell.exe -noexit -file $SetupPath\Setup.ps1 -Stage $Stage" /F
     }
-Function Register-DNS ($Record, $IP){
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    $DomainName = $OmniParam.DomainName
-    $DomainAdmin = $OmniParam.DomainAdmin
-    $Password = $OmniParam.Password
-    $DomainCredential = New-Object System.Management.Automation.PSCredential ($OmniParam.DomainAdmin, ($OmniParam.Password | ConvertTo-SecureString -AsPlainText -Force))
-    $Command = "dnscmd /recordadd $DomainName $Record A $IP"
+
+Function Register-DNS ($Record, $IP, $Type = "A"){
+    $DomainCredential = New-Object System.Management.Automation.PSCredential ($DomainAdmin, ($Password | ConvertTo-SecureString -AsPlainText -Force))
+    $Command = "dnscmd /recordadd $DomainName $Record $Type $IP"
     invoke-command -ComputerName ($Env:LogonServer -replace "\\\\","") ([scriptblock]::Create("invoke-expression ""$Command""")) -Credential $DomainCredential
     }
+
+Function RegisterDNS {
+    $DNSNodes = $XML | Select-XML -XPath "//Configuration/DNSRecords"
+    $DNSNodes.Node.ChildNodes | %{ 
+        $DomainCredential = New-Object System.Management.Automation.PSCredential ($DomainAdmin, ($Password | ConvertTo-SecureString -AsPlainText -Force))
+        $Command = "dnscmd /recordadd $DomainName $($_.Name) $($_.Type) $($_.Data)"
+        invoke-command -ComputerName $ADDS.hostname ([scriptblock]::Create("invoke-expression ""$Command""")) -Credential $DomainCredential
+        }
+    }
+
 Function Create-LocalUser ($Username, $Password) {
     if (-not [ADSI]::Exists("WinNT://./$username")) {
         $cn = [ADSI]"WinNT://."
@@ -133,11 +164,12 @@ Function Enable-FirewallGroup ($FirewallGroup) {
     Invoke-Expression "netsh advfirewall firewall set rule group=""$FirewallGroup"" new enable=yes"
     }
 Function Set-Networking ($IP){
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
+    do {write-host "Getting network adapter...";start-sleep 3}
+    until ((Get-WmiObject win32_networkadapterconfiguration -filter "ipenabled = 'true'" | select -first 1))
     $NetworkWMI = Get-WmiObject win32_networkadapterconfiguration -filter "ipenabled = 'true'" | select -first 1
-    $NetworkWMI.EnableStatic($IP, $OmniParam.NetMask)
-    $NetworkWMI.SetGateways($OmniParam.Gateway, 1)
-    $NetworkWMI.SetDNSServerSearchOrder($OmniParam.DNSServer)
+    $NetworkWMI.EnableStatic($IP, $NetMask)
+    $NetworkWMI.SetGateways($Gateway, 1)
+    $NetworkWMI.SetDNSServerSearchOrder($ADDS.ipaddress)
     }
 Function Set-EnvironmentVariable ($Name, $Value){
     if ($Value) {
@@ -145,28 +177,29 @@ Function Set-EnvironmentVariable ($Name, $Value){
         }
     }
 Function Join-Domain ($ServerName, $Role){
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
+
     if ($Role -eq 'DC') {
         Rename-Computer $ServerName
         } else {
-        While (!(Test-Connection $OmniParam.DomainName -Quiet)) {
-            Read-Host "Can't reach $($OmniParam.DomainName). Retrying..."
+        While (!(Test-Connection $DomainName -Quiet)) {
+            Read-Host "Can't reach $($DomainName). Retrying..."
             Start-Sleep 3
             } 
         if (Test-Connection $ServerName -Quiet) {$Options -= 2}
         $ComputerWMI = Get-WmiObject win32_computersystem
         $Options = 23
-        $ComputerWMI.JoinDomainOrWorkGroup($OmniParam.DomainName, $OmniParam.Password, $OmniParam.DomainAdmin, $Null, $Options)
-        $ComputerWMI.Rename($ServerName,$OmniParam.Password,$OmniParam.DomainAdmin)
-        Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' 'DefaultUserName' $OmniParam.DomainAdmin 'String'
+        $ComputerWMI.JoinDomainOrWorkGroup($DomainName, $Password, $DomainAdmin, $Null, $Options)
+        $ComputerWMI.Rename($ServerName,$Password,$DomainAdmin)
+        Add-Registry 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' 'DefaultUserName' $DomainAdmin 'String'
         }
     }
-Function Install-NetFX3 ($Role){
+Function Install-NetFX3 {
+    if ($Role -eq "DC"){New-SmbShare -Name winsxs -Path C:\windows\winsxs -FullAccess "Everyone"}
     if (!((Get-WindowsFeature net-framework-core).installed)){
         If ($Role -eq "DC"){
-            $Source = $OmniParam.Server2012Media
+            $Source = $Server2012Media
             } ELSE {
-            $Source = "$Env:LogonServer\winsxs"
+            $Source = "\\$($ADDS.hostname)\winsxs"
             }
         While (!(Test-Path $Source)){Write-Output "NetFX3 Installation Error: Unable to reach $source.  Trying again in 5 seconds...";Start-Sleep 5}
         Start-Process -FilePath "DISM.exe" -ArgumentList "/Online /Enable-Feature /FeatureName:NetFx3 /All /LimitAccess /Source:$Source" -Wait
@@ -179,20 +212,26 @@ Function Create-FirewallRule ($Name, $Protocol, $Direction, $Port){
      }
 
 Function Install-SQLExpress ($Instance) {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
+    if (-not (test-path $SQLExpressFile)) {
+        if (Test-Connection "http://download.microsoft.com" -Quiet) {
+            wget http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/Express%2064BIT/SQLEXPR_x64_ENU.exe -OutFile $SQLExpressFile
+            } 
+        else {
+            write-host "Can't find $SQLExpressFile and I can't reach http://download.microsoft.com."; throw "Can't find SQLExpress installer."
+            }
+        }
     Write-Output "Installing SQL instance: $instance"
-    Start-Process -FilePath $OmniParam.SQLExpressFilePath -wait -argumentlist "/QUIET /IACCEPTSQLSERVERLICENSETERMS /ACTION=Install /FEATURES=SQLEngine,Tools /INSTANCENAME=$instance /TCPENABLED=1 /SQLSVCACCOUNT=""NT AUTHORITY\NetworkService"" /SQLSYSADMINACCOUNTS=""Builtin\Administrators"" /BROWSERSVCSTARTUPTYPE=""Automatic"" /AGTSVCACCOUNT=""NT AUTHORITY\NetworkService"" /SQLSVCSTARTUPTYPE=""Automatic"""
+    Start-Process -FilePath $SQLExpressFile -wait -argumentlist "/QUIET /IACCEPTSQLSERVERLICENSETERMS /ACTION=Install /FEATURES=SQLEngine,Tools /INSTANCENAME=$instance /TCPENABLED=1 /SQLSVCACCOUNT=""NT AUTHORITY\NetworkService"" /SQLSYSADMINACCOUNTS=""Builtin\Administrators"" /BROWSERSVCSTARTUPTYPE=""Automatic"" /AGTSVCACCOUNT=""NT AUTHORITY\NetworkService"" /SQLSVCSTARTUPTYPE=""Automatic"""
     }
 
 Function Install-Polipo {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    Start-Process -FilePath $OmniParam.PolipoSetupPath -Wait
+    Start-Process -FilePath $PolipoSetupFile -Wait
     }
 
 Function Add-SRVRecord ($Target, $Name, $Port) {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    $Command = "Add-DnsServerResourceRecord -Srv -DomainName ""$Target.$($OmniParam.DomainName)"" -ZoneName ""$($OmniParam.DomainName)"" -Name $Name -Port $Port -Priority 0 -Weight 0"
-    $DomainCredential = New-Object System.Management.Automation.PSCredential ($OmniParam.DomainAdmin, ($OmniParam.Password | ConvertTo-SecureString -AsPlainText -Force))
+
+    $Command = "Add-DnsServerResourceRecord -Srv -DomainName ""$Target.$($DomainName)"" -ZoneName ""$($DomainName)"" -Name $Name -Port $Port -Priority 0 -Weight 0"
+    $DomainCredential = New-Object System.Management.Automation.PSCredential ($DomainAdmin, ($Password | ConvertTo-SecureString -AsPlainText -Force))
     $Scriptblock = [scriptblock]::Create($Command)
     Invoke-Command -ScriptBlock $Scriptblock -ComputerName ($Env:LogonServer -replace "\\\\","") -Credential $DomainCredential
     }

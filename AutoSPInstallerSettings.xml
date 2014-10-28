@@ -22,7 +22,7 @@
   <Farm>
     <Passphrase>%PASSWORD%%PASSWORD%</Passphrase>
     <Account AddToLocalAdminsDuringSetup="true" LeaveInLocalAdmins="false">
-      <Username>%NETBIOS%\SP_Farm</Username>
+      <Username>%NETBIOSNAME%\SP_Farm</Username>
       <Password>%PASSWORD%</Password>
     </Account>
     <CentralAdmin Provision="localhost">
@@ -32,7 +32,7 @@
     </CentralAdmin>
     <Database>
       <DBServer>SQL\SHAREPOINT</DBServer>
-      <DBAlias Create="true" DBInstance="localhost\sharepoint" DBPort="" />
+      <DBAlias Create="true" DBInstance="%SQLINSTANCE%" DBPort="" />
       <DBPrefix>SP%VERSION%</DBPrefix>
       <ConfigDB>Config</ConfigDB>
     </Database>
@@ -52,25 +52,25 @@
     </Services>
     <ManagedAccounts>
       <ManagedAccount CommonName="spservice">
-        <Username>%NETBIOS%\SP_Services</Username>
+        <Username>%NETBIOSNAME%\SP_Services</Username>
         <Password>%PASSWORD%</Password>
       </ManagedAccount>
       <ManagedAccount CommonName="Portal">
-        <Username>%NETBIOS%\SP_PortalAppPool</Username>
+        <Username>%NETBIOSNAME%\SP_PortalAppPool</Username>
         <Password>%PASSWORD%</Password>
       </ManagedAccount>
       <ManagedAccount CommonName="MySiteHost">
-        <Username>%NETBIOS%\SP_ProfilesAppPool</Username>
+        <Username>%NETBIOSNAME%\SP_ProfilesAppPool</Username>
         <Password>%PASSWORD%</Password>
       </ManagedAccount>
       <ManagedAccount CommonName="SearchService">
-        <Username>%NETBIOS%\SP_SearchService</Username>
+        <Username>%NETBIOSNAME%\SP_SearchService</Username>
         <Password>%PASSWORD%</Password>
       </ManagedAccount>
     </ManagedAccounts>
     <ObjectCacheAccounts>
-      <SuperUser>%NETBIOS%\SP_CacheSuperUser</SuperUser>
-      <SuperReader>%NETBIOS%\SP_CacheSuperReader</SuperReader>
+      <SuperUser>%NETBIOSNAME%\SP_CacheSuperUser</SuperUser>
+      <SuperReader>%NETBIOSNAME%\SP_CacheSuperReader</SuperReader>
     </ObjectCacheAccounts>
     <Logging>
       <IISLogs Compress="true">
@@ -100,7 +100,7 @@
         <ManagedPath relativeUrl="help" explicit="true" />
       </ManagedPaths>
       <SiteCollections>
-        <SiteCollection siteUrl="https://portal.%DOMAINNAME%" HostNamedSiteCollection="false" Owner="%NETBIOS%\Administrator" Name="Portal Home" Description="Portal Home Site" CustomDatabase="" SearchUrl="http://portal.%DOMAINNAME%/search" CustomTemplate="false" Template="SPSPORTAL#0" LCID="1033" Locale="en-us" Time24="false" />
+        <SiteCollection siteUrl="https://portal.%DOMAINNAME%" HostNamedSiteCollection="false" Owner="%NETBIOSNAME%\Administrator" Name="Portal Home" Description="Portal Home Site" CustomDatabase="" SearchUrl="http://portal.%DOMAINNAME%/search" CustomTemplate="false" Template="SPSPORTAL#0" LCID="1033" Locale="en-us" Time24="false" />
       </SiteCollections>
     </WebApplication>
     <WebApplication type="MySiteHost" name="MySite Host" applicationPool="MySites" url="https://mysites.%DOMAINNAME%" port="443" UseHostHeader="true" AddURLToLocalIntranetZone="true" GrantCurrentUserFullControl="true" useClaims="true" useBasicAuthentication="false" useOnlineWebPartCatalog="false">
@@ -113,7 +113,7 @@
         <ManagedPath relativeUrl="personal" explicit="false" />
       </ManagedPaths>
       <SiteCollections>
-        <SiteCollection siteUrl="https://mysites.%DOMAINNAME%" HostNamedSiteCollection="false" Owner="%NETBIOS%\administrator" Name="My Site Host" Description="My Site Host" CustomDatabase="" SearchUrl="https://portal.%DOMAINNAME%/search" CustomTemplate="false" Template="SPSMSITEHOST#0" LCID="1033" Locale="en-us" Time24="false" />
+        <SiteCollection siteUrl="https://mysites.%DOMAINNAME%" HostNamedSiteCollection="false" Owner="%NETBIOSNAME%\administrator" Name="My Site Host" Description="My Site Host" CustomDatabase="" SearchUrl="https://portal.%DOMAINNAME%/search" CustomTemplate="false" Template="SPSMSITEHOST#0" LCID="1033" Locale="en-us" Time24="false" />
       </SiteCollections>
     </WebApplication>
   </WebApplications>
@@ -136,7 +136,7 @@
     </UserProfileServiceApp>
     <EnterpriseSearchService Provision="localhost" ContactEmail="administrator@%DOMAINNAME%" ConnectionTimeout="60" AcknowledgementTimeout="60" ProxyType="Default" IgnoreSSLWarnings="true" InternetIdentity="Mozilla/4.0 (compatible; MSIE 4.01; Windows NT; MS Search 6.0 Robot)" CustomIndexLocation="" PerformanceLevel="PartlyReduced" ShareName="SearchIndex">
       <EnterpriseSearchServiceApplications>
-        <EnterpriseSearchServiceApplication Name="Search Service Application" FailoverDatabaseServer="" Partitioned="false" Partitions="1" SearchServiceApplicationType="Regular" ContentAccessAccount="%NETBIOS%\SP_SearchContent" ContentAccessAccountPassword="%PASSWORD%">
+        <EnterpriseSearchServiceApplication Name="Search Service Application" FailoverDatabaseServer="" Partitioned="false" Partitions="1" SearchServiceApplicationType="Regular" ContentAccessAccount="%NETBIOSNAME%\SP_SearchContent" ContentAccessAccountPassword="%PASSWORD%">
           <Database>
             <Name>Search</Name>
             <DBServer />

@@ -1,3 +1,5 @@
-mkdir c:\deploy
-xcopy . c:\deploy /e
+if not exist c:\deploy (
+	mkdir c:\deploy
+	)
+xcopy . c:\deploy /e /d /y
 start c:\deploy

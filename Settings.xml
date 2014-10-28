@@ -1,71 +1,45 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Configuration>
+  <DNSRecords>
+    <Record name="Portal" type="A" data="192.168.1.70" />
+    <Record name="adfs3" type="A" data="192.168.1.50" />
+    <Record name="Mysites" type="A" data="192.168.1.70" />
+  </DNSRecords>
+  <DerivedParameters>
+    <CAConfig>"$($ADDS.Hostname).$NetBiosName.$TLD\$($ADDS.Hostname)"</CAConfig>
+    <DomainAdmin>"$NetBiosName\Administrator"</DomainAdmin>
+    <DomainUserPath>"OU=$UserOU,DC=$NetBiosName,DC=$TLD"</DomainUserPath>
+    <DomainGroupPath>"OU=$GroupOU,DC=$NetBiosName,DC=$TLD"</DomainGroupPath>
+    <DomainUserList>(Get-Content "$ScriptPath\DomainUserList.txt")</DomainUserList>
+    <DomainGroupList>(Get-Content "$ScriptPath\DomainGroupList.txt")</DomainGroupList>
+    <LyncUserList>(Get-Content "$ScriptPath\DomainUserList.txt" | Select-String -Pattern "Lync")</LyncUserList>
+    <SharepointUserList>(Get-Content "$ScriptPath\DomainUserList.txt" | Select-String -Pattern "Sharepoint")</SharepointUserList>
+    <DomainName>"$NetBiosName.$TLD"</DomainName>
+  </DerivedParameters>
   <Hosts>
-    <ADDSSettings>
-      <Hostname>WINDEV-DC</Hostname>
-      <IPAddress>192.168.1.50</IPAddress>
-      <Role>DC</Role>
-      <Version>2012R2</Version>
-    </ADDSSettings>
-    <SQLHostSettings>
-      <Hostname>WINDEV-SQL</Hostname>
-      <IPAddress>192.168.1.60</IPAddress>
-      <Role>SQL</Role>
-      <Version>2012</Version>
-    </SQLHostSettings>
-    <SP2013Settings>
-      <Hostname>WINDEV-SP2013</Hostname>
-      <IPAddress>192.168.1.70</IPAddress>
-      <Role>SP</Role>
-      <Version>2013</Version>
-      <LicenseKey>%2013LICENSE%</LicenseKey>
-    </SP2013Settings>
-    <SP2010Settings>
-      <Hostname>WINDEV-SP2010</Hostname>
-      <IPAddress>192.168.1.80</IPAddress>
-      <Role>SP</Role>
-      <Version>2010</Version>
-      <LicenseKey>%2010LICENSE%</LicenseKey>
-    </SP2010Settings>
-    <Lync2013StdSettings>
-      <Hostname>WINDEV-LYNC2013</Hostname>
-      <IPAddress>192.168.1.90</IPAddress>
-      <Role>Lync</Role>
-      <Version>2013</Version>
-    </Lync2013StdSettings>
-    <Lync2010StdSettings>
-      <Hostname>WINDEV-LYNC2010</Hostname>
-      <IPAddress>192.168.1.100</IPAddress>
-      <Role>Lync</Role>
-      <Version>2010</Version>
-    </Lync2010StdSettings>
-    <W8ClientSettings>
-      <Hostname>WINDEV-W8CLIENT</Hostname>
-      <IPAddress>192.168.1.110</IPAddress>
-      <Role>Client</Role>
-      <Version>Win8</Version>
-    </W8ClientSettings>
-    <W7ClientSettings>
-      <Hostname>WINDEV-W7CLIENT</Hostname>
-      <IPAddress>192.168.1.120</IPAddress>
-      <Role>Client</Role>
-      <Version>Win7</Version>
-    </W7ClientSettings>
+    <ADDS hostname="WINDEV-DC" ipaddress="192.168.1.50" role="DC" version="2012R2" />
+    <SP2013 hostname="WINDEV-SP2013" ipaddress="192.168.1.70" role="SP" version="2013" licensekey="00000-00000-00000-00000-00000" />
+    <SP2010 hostname="WINDEV-SP2010" ipaddress="192.168.1.80" role="SP" version="2010" licensekey="00000-00000-00000-00000-00000" />
+    <Lync2013Std hostname="WINDEV-LYNC2013" ipaddress="192.168.1.90" role="Lync" version="2013" />
+    <Lync2010Std hostname="WINDEV-LYNC2010" ipaddress="192.168.1.100" role="Lync" version="2010" />
+    <W8Client hostname="WINDEV-W8CLIENT" ipaddress="192.168.1.110" role="Client" version="Win8" />
+    <W7Client hostname="WINDEV-W7CLIENT" ipaddress="192.168.1.120" role="Client" version="Win7" />
   </Hosts>
   <Paths>
-    <SetupPath>C:\Deploy</SetupPath>
-    <SQLInstallPath>D:</SQLInstallPath>
-    <SQLConfigPath>c:\deploy\sql\sql_configuration.ini</SQLConfigPath>
-    <AutoSPInstallerPath>c:\deploy\sharepoint\autospinstaller</AutoSPInstallerPath>
-    <StepFilePath>c:\deploy\step.txt</StepFilePath>
-    <FlowFilePath>c:\deploy\flow.txt</FlowFilePath>
-    <TopologyPath>c:\deploy\lync\jivewindev.com.tbxml</TopologyPath>
-    <LyncMediaPath>D:</LyncMediaPath>
-    <LyncSharePath>C:\LyncShare</LyncSharePath>
-    <InstallPath>c:\deploy\installs</InstallPath>
-    <UserListFileName>DomainUserList.txt</UserListFileName>
-    <GroupListFileName>DomainGroupList.txt</GroupListFileName>
-    <SharepointModule>C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\15\CONFIG\POWERSHELL\Registration\sharepoint.ps1</SharepointModule>
+    <SetupPath>c:\deploy</SetupPath>
+    <AutoSPInstallerFile>c:\deploy\sharepoint\autospinstaller\AutoSPInstallerLaunch.bat</AutoSPInstallerFile>
+    <AutoSPInstallerXMLFile>c:\deploy\AutoSPInstallerSettings.xml</AutoSPInstallerXMLFile>
+    <StepFile>c:\deploy\step.txt</StepFile>
+    <FlowFile>c:\deploy\flow.txt</FlowFile>
+    <TopologyFile>c:\deploy\lync\jivewindev.com.tbxml</TopologyFile>
+    <LyncUpdateFile>c:\deploy\installs\lyncserverupdateinstaller.exe</LyncUpdateFile>
+    <SilverLight>c:\deploy\installs\Silverlight_x64.exe</SilverLight>
+    <PolipoSetupFile>c:\deploy\installs\polipo\install_polipo.cmd</PolipoSetupFile>
+    <SharepointModule>c:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\15\CONFIG\POWERSHELL\Registration\sharepoint.ps1</SharepointModule>
+    <Server2012Media>d:\sources\sxs</Server2012Media>
+    <LyncShare>c:\LyncShare</LyncShare>
+    <SP2013Media>d:</SP2013Media>
+    <LyncMedia>d:</LyncMedia>
   </Paths>
   <Networking>
     <NetMask>255.255.255.0</NetMask>
@@ -79,8 +53,8 @@
     <Password>Abc123!</Password>
   </ADSettings>
   <SQLSettings>
-    <SQLExpressFileName>SQLEXPR_x64_ENU.exe</SQLExpressFileName>
-    <SQLInstance>localhost\sharepoint</SQLInstance>
+    <SQLExpressFile>C:\Deploy\Installs\SQLEXPR_x64_ENU.exe</SQLExpressFile>
+    <SPSQLInstance>localhost\sharepoint</SPSQLInstance>
     <SQLAgentUsername>sqlagent</SQLAgentUsername>
     <SQLEngineUsername>sqlengine</SQLEngineUsername>
   </SQLSettings>

@@ -1,8 +1,5 @@
 ﻿
 Function Update-TrustedIdentityTokenIssuer($Identifier, $ADFSName, $URL){
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    $DomainName = $OmniParam.DomainName
-    $NetBiosName = $OmniParam.NetBiosName
     $TokenSigningCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("$env:LOGONSERVER\c$\$($ADFSName)tokensigningcert.cer")
     If ((Get-SPTrustedRootAuthority).certificate.thumbprint -notcontains $TokenSigningCert.Thumbprint) {New-SPTrustedRootAuthority -Name "Token Signing Cert" -Certificate $TokenSigningCert}
     $emailClaimMap = New-SPClaimTypeMapping -IncomingClaimType "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress" -IncomingClaimTypeDisplayName "EmailAddress" -SameAsIncoming
@@ -27,8 +24,6 @@ Function Update-TrustedIdentityTokenIssuer($Identifier, $ADFSName, $URL){
     $AP = $null
     }
 Function Finalize-SP2013 {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    $DomainName = $OmniParam.DomainName
     Start-Website "Sharepoint Central Administration v4"
     Update-TrustedIdentityTokenIssuer "portal" "adfs3" "https://portal.$DomainName" 
     Update-TrustedIdentityTokenIssuer "mysites" "adfs3" "https://mysites.$DomainName"
@@ -52,12 +47,10 @@ Function Add-SPWebAppGroupClaim ($WebAppUrl, $GroupName, $ADFS_STS) {
     $WebApp = $nul
     }
 Function Install-Sharepoint {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    start-process -FilePath "$($OmniParam.AutoSPInstallerPath)\AutoSPInstallerLaunch.bat" -argumentlist "$($OmniParam.SetupPath)\AutoSPInstallerSettings.xml" -wait
+    start-process -FilePath "$AutoSPInstallerFile" -argumentlist "$AutoSPInstallerXMLFile"
     throw "Installing Sharepoint, no reboot required."
     }
 Function Setup-Sharepoint {
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
     Update-AutoSPInstallerXML
     Import-Module ServerManager
     Install-WindowsFeature "RSAT-AD-Tools"
@@ -73,19 +66,23 @@ Function Setup-Sharepoint {
     Install-WindowsFeature AS-HTTP-Activation,AS-TCP-Activation,AS-Named-Pipes,AS-Net-Framework
     Install-WindowsFeature WAS,WAS-Process-Model,WAS-NET-Environment,WAS-Config-APIs,Web-Lgcy-Scripting
     Install-WindowsFeature Windows-Identity-Foundation,Server-Media-Foundation,Xps-Viewer
-    New-CertificateRequest -subject "CN=$Env:Computername" -OnlineCA $OmniParam.CAConfig
-    New-CertificateRequest -subject "CN=*.$($OmniParam.DomainName)" -OnlineCA $OmniParam.CAConfig
+    New-CertificateRequest -subject "CN=$Env:Computername" -OnlineCA $CAConfig
+    New-CertificateRequest -subject "CN=*.$DomainName" -OnlineCA $CAConfig
     }
 
 Function Update-AutoSPInstallerXML{
-    $OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
-    $RawXML = get-content "$($OmniParam.SetupPath)\AutoSPInstallerSettings.xml" -raw
-    $RawXML = $RawXML -replace "%DOMAINNAME%",$OmniParam.DomainName
-    $RawXML = $RawXML -replace "%NETBIOS%",$OmniParam.NetBiosName
-    $RawXML = $RawXML -replace "%PASSWORD%",$OmniParam.Password
-    $RawXML = $RawXML -replace "%SQLINSTANCE%",$OmniParam.SQLInstance
-    $RawXML = $RawXML -replace "%LICENSEKEY%",$OmniParam.("LicenseKey$Env:Version")
-    $RawXML = $RawXML -replace "%VERSION%",$Env:Version
+    $Entries = get-content $AutoSPInstallerXMLFile | Select-String -Pattern "\%\w+\%" | %{$_.matches[0].groups.value} | select -Unique
+    $RawXML = get-content $AutoSPInstallerXMLFile -raw
+    $Version = $Env:Version
+    $LicenseKey = Get-Variable -Name "LicenseKey$Version" -ValueOnly
+    foreach ($Entry in $Entries) {$RawXML = $RawXML -replace $Entry,(Get-Content "Variable:\$($Entry -replace '%')")}
     [xml]$XML = $RawXML
-    $xml.Save("$($OmniParam.SetupPath)\AutoSPInstallerSettings.xml")
+    $xml.Save($AutoSPInstallerXMLFile)
     }
+
+
+#New-SPWebApplication -Name "Curltest2" -ApplicationPool "Curltest2" -AuthenticationMethod "NTLM" -ApplicationPoolAccount (Get-SPManagedAccount "pocketdomain\sp_farm") -Port 80 -URL "https://curltest2.pocketdomain.corp" -AuthenticationProvider (New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication)
+#$ap = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication 
+#Get-SPWebApplication -Identity http://curltest.pocketdomaincorp | New-SPWebApplicationExtension -Name IntranetSite -HostHeader curltest2intranet -Zone Intranet -URL http://intranet.sitename.com -Port 9876 -AuthenticationProvider $ap
+
+#chevy SUV 931BCM

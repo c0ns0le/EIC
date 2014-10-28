@@ -1,20 +1,23 @@
 ﻿param($stage)
 
-if ($PSScriptRoot) {$ScriptPath = $PSScriptRoot} else {$ScriptPath = "C:\Deploy"}
-
-start-process -filepath "powershell.exe" -argumentlist "-file ""$ScriptPath\OmniParameterGenerator.ps1""" -wait
-$OmniParam = Import-Clixml "$Env:Temp\OmniParameter.xml"
+if ($PSScriptRoot) {$ScriptPath = $PSScriptRoot} else {$ScriptPath = "C:\EIC\Deploy"}
 
 . "$ScriptPath\Functions.ps1"
 . "$ScriptPath\SP_Functions.ps1"
 . "$ScriptPath\Lync_Functions.ps1"
 . "$ScriptPath\ADDS_Functions.ps1"
 
-if (Test-Path $OmniParam.SharepointModule) {. $OmniParam.SharepointModule}
-if (Test-Path $OmniParam.FlowFilePath) {$Flow = Get-Content $OmniParam.FlowFilePath} else {Throw "No flow file present.";exit}
-if (Test-Path $OmniParam.StepFilePath) {[int]$Step = Get-Content $OmniParam.StepFilePath} else {$Step = 0}
+LoadParameters
+if (Test-Path $StepFile) {[int]$Step = Get-Content $StepFile} else {$Step = 0}
+$Step++; $Step | Out-File $StepFile -Force
+ValidateParameters
+$Flow = Get-Content $FlowFile
+$LicenseKey2013 = $SP2013.licensekey
+$LicenseKey2010 = $SP2010.licensekey
 
-$Step++; $Step | Out-File $OmniParam.StepFilePath -Force
+if (Test-Path $SharepointModule) {. $SharepointModule}
+
+
 if ($stage) {$flow = $stage}
 
 $CompletionBlock = {
@@ -24,11 +27,11 @@ $CompletionBlock = {
 $ADDSFlow = {
     switch ($step)
         {
-            1 {Initialize -Settings $OmniParam.ADDSSettings}
+            1 {Initialize -Settings $ADDS; Install-NetFX3 "DC"}
             2 {Install-ADDSRSATFeatures; Install-Polipo}
             3 {Install-ADDSFeatures}
             4 {Install-Forest}
-            5 {Create-ADObjects; Install-PKI}
+            5 {Create-ADObjects; RegisterDNS; Install-PKI}
             6 {Install-ADFS3}
             7 {&$CompletionBlock}
         }
@@ -37,29 +40,21 @@ $ADDSFlow = {
 $SP2013Flow = {
     switch ($step)
         {
-            1 {Initialize -Settings $OmniParam.SP2013Settings}
-            2 {Setup-Sharepoint}
+            1 {Initialize -Settings $SP2013}
+            2 {Install-NetFX3 "SP"; Setup-Sharepoint}
             3 {Install-SQLExpress "Sharepoint"; Install-Sharepoint}
             4 {&$CompletionBlock}
         }
     }
 
-$SQLFlow = {
-    switch ($step)
-        {
-            1 {Initialize -Settings $OmniParam.SQLHostSettings}
-            2 {Install-SQL @OmniParam}
-            3 {&$CompletionBlock}
-        }
-    }
 
 $Lync2013StdFlow = {
     switch ($step)
         {
-            1 {Initialize -Settings $OmniParam.Lync2013StdSettings}
-            2 {Install-NetFX3 "Lync"; InstallWasp;}# DeployLync2013Std @OmniParam}
-            3 {}#DeployLyncRoundTwo @OmniParam}
-            3 {}#InstallLyncUpdates @OmniParam}
+            1 {Initialize -Settings $Lync2013Std}
+            2 {Install-NetFX3 "Lync"; InstallWasp;}# DeployLync2013Std}
+            3 {}#DeployLyncRoundTwo}
+            3 {}#InstallLyncUpdates}
             4 {}#ConfigureLyncUpdates}
             5 {}#&$CompletionBlock}
         }
@@ -68,7 +63,7 @@ $Lync2013StdFlow = {
 $W7ClientFlow = {
     switch ($step)
         {
-            1 {Initialize -Settings $OmniParam.W7ClientSettings}
+            1 {Initialize -Settings $W7Client}
             #2 {Install-Chocolatey}
             2 {&$CompletionBlock}
         }
@@ -82,7 +77,6 @@ switch ($Flow)
         "sql"         {&$SQLFlow}
         "sqlsp2013"   {&$SP2013SQLFlow}
         "sp2013"      {&$SP2013Flow}
-        "sql"         {&$SQLFlow}
         "sp2013post"  {Finalize-SP2013}
         "Lync2013Std" {&$Lync2013StdFlow}
         "Lync2010Std" {&$Lync2010StdFlow}
