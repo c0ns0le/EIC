@@ -32,7 +32,7 @@
     </CentralAdmin>
     <Database>
       <DBServer>SQL\SHAREPOINT</DBServer>
-      <DBAlias Create="true" DBInstance="%SQLINSTANCE%" DBPort="" />
+      <DBAlias Create="true" DBInstance="%SPSQLINSTANCE%" DBPort="" />
       <DBPrefix>SP%VERSION%</DBPrefix>
       <ConfigDB>Config</ConfigDB>
     </Database>
