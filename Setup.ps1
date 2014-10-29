@@ -85,4 +85,6 @@ switch ($Flow)
         "W8Client"    {&$W7ClientFlow}
     }
 
+ipconfig /all
+
 if (!($Error[0])) {Restart-Computer} else {Write-Host "Errors!"; $Error | Select-Object * | Out-File c:\errors.txt -Append; notepad.exe c:\errors.txt}
