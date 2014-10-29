@@ -90,7 +90,7 @@ public class ISOFile
   }#End End 
 }#End function New-IsoFile 
 
-$ISOPath = "C:\users\nate.schoolfield\Desktop\deploy.iso"
-$SourcePath = "C:\eic\deploy\."
+$ISOPath = "$Env:UserProfile\Desktop\deploy.iso"
+$SourcePath = "c:\eic\deploy\."
 remove-item $ISOPath
-new-isofile -Source $SourcePath -Path $ISOPath
+new-isofile -Source (dir $SourcePath) -Path $ISOPath

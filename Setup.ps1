@@ -1,5 +1,6 @@
 ﻿param($stage)
 
+Start-Transcript -Path "$env:USERPROFILE\Desktop\Transcript$(get-date -Format yyyyMMdd.hhmm).txt"
 if ($PSScriptRoot) {$ScriptPath = $PSScriptRoot} else {$ScriptPath = "C:\EIC\Deploy"}
 
 . "$ScriptPath\Functions.ps1"
