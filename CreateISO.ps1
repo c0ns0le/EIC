@@ -92,5 +92,5 @@ public class ISOFile
 
 $ISOPath = "$Env:UserProfile\Desktop\deploy.iso"
 $SourcePath = "c:\eic\deploy\."
-remove-item $ISOPath
+if (test-path $isopath) {remove-item $ISOPath}
 new-isofile -Source (dir $SourcePath) -Path $ISOPath
